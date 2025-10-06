@@ -2,7 +2,7 @@ name: "Build MCP Server and Deploy"
 on:
     push:
         branches:
-            - main
+            - master
 jobs:
     build-server:
         name: "Build MCP Server"
