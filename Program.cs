@@ -1,7 +1,7 @@
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole(consoleLogOptions =>
 {
     // Configure all logs to go to stderr
@@ -9,9 +9,14 @@ builder.Logging.AddConsole(consoleLogOptions =>
 });
 builder.Services
     .AddMcpServer()
-    .WithStdioServerTransport()
+    .WithHttpTransport()
     .WithTools<EchoTool>();
-await builder.Build().RunAsync();
+
+var app = builder.Build();
+
+app.MapMcp();
+
+await app.RunAsync();
 
 [McpServerToolType]
 public class EchoTool
