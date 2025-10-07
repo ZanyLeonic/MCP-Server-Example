@@ -63,7 +63,9 @@ namespace MCPServerDemo.Tools
                 int legStep = 1;
                 foreach (var leg in legs)
                 {
-                    journeySummary.AppendLine($"{legStep}. => {leg.GetProperty("instruction").GetProperty("summary").ToString()} ({leg.GetProperty("duration").ToString()} min(s))");
+                    journeySummary.AppendLine($"{legStep}. => {leg.GetProperty("instruction").GetProperty("summary").ToString()} (Length: {leg.GetProperty("duration").ToString()} min(s))");
+                    journeySummary.AppendLine($"   Departs: {leg.GetProperty("departureTime").GetString()}");
+                    journeySummary.AppendLine($"   Arrives: {leg.GetProperty("arrivalTime").GetString()}"); 
                     legStep++;
                 }
                 jOption++;
