@@ -14,12 +14,12 @@ namespace MCPServerDemo.Tools
             [Description("Destination of the journey. Can be WGS84 coordinates expressed as \"lat,long\", a UK postcode, a Naptan (StopPoint) id, an ICS StopId, or a free-text string (will cause disambiguation unless it exactly matches a point of interest name).")] string toLocation,
             [Description("(Optional) Travel through point on the journey. Can be WGS84 coordinates expressed as \"lat,long\", a UK postcode, a Naptan (StopPoint) id, an ICS StopId, or a free-text string (will cause disambiguation unless it exactly matches a point of interest name).")] string via = "",
             [Description("(Optional) Does the journey cover stops outside London zones? eg. \"nationalSearch=true\"")] bool nationalSearch = false,
-            [Description("(Optional) The date must be in yyyyMMdd format")] string date="",
-            [Description("(Optional) The time must be in HHmm format")] string time="",
-            [Description("(Optional) Does the time given relate to arrival or leaving time? Possible options: \"departing\" | \"arriving\" (Default: departing)")] string timeIs="departing",
-            [Description("(Optional) The journey preference eg possible options: \"leastinterchange\" | \"leasttime\" | \"leastwalking\" (Default: leastinterchange)")] string journeyPreference="leastinterchange",
-            [Description("(Optional) The mode must be a comma separated list of modes. eg possible options (and default): \"bus,overground,national-rail,tube,coach,dlr,cable-car,tram,river-bus,walking,cycle\"")] string mode= "bus,overground,national-rail,tube,coach,dlr,cable-car,tram,river-bus,walking,cycle",
-            [Description("(Optional) A boolean to make Journey Planner return alternative routes. Alternative routes are calculated by removing one or more lines included in the fastest route and re-calculating. By default, these journeys will not be returned. (Default: false)")] bool includeAlternativeRoutes=false)
+            [Description("(Optional) The date must be in yyyyMMdd format")] string date = "",
+            [Description("(Optional) The time must be in HHmm format")] string time = "",
+            [Description("(Optional) Does the time given relate to arrival or leaving time? Possible options: \"departing\" | \"arriving\" (Default: departing)")] string timeIs = "departing",
+            [Description("(Optional) The journey preference eg possible options: \"leastinterchange\" | \"leasttime\" | \"leastwalking\" (Default: leastinterchange)")] string journeyPreference = "leastinterchange",
+            [Description("(Optional) The mode must be a comma separated list of modes. eg possible options (and default): \"bus,overground,national-rail,tube,coach,dlr,cable-car,tram,river-bus,walking,cycle\"")] string mode = "bus,overground,national-rail,tube,coach,dlr,cable-car,tram,river-bus,walking,cycle",
+            [Description("(Optional) A boolean to make Journey Planner return alternative routes. Alternative routes are calculated by removing one or more lines included in the fastest route and re-calculating. By default, these journeys will not be returned. (Default: false)")] bool includeAlternativeRoutes = false)
         {
             var url = $"/Journey/JourneyResults/{fromLocation}/to/{toLocation}?nationalSearch={nationalSearch}&timeIs={timeIs}&journeyPreference={journeyPreference}&mode={mode}&includeAlternativeRoutes={includeAlternativeRoutes}" + (via != "" ? $"&via={via}" : "") + (date != "" ? $"&date={date}" : "") + (time != "" ? $"&time={time}" : "");
             using var response = await client.GetAsync(url);
@@ -27,7 +27,8 @@ namespace MCPServerDemo.Tools
             JsonDocument jDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             JsonElement jElem = jDoc.RootElement;
 
-            if (response.StatusCode == System.Net.HttpStatusCode.MultipleChoices) {
+            if (response.StatusCode == System.Net.HttpStatusCode.MultipleChoices)
+            {
                 StringBuilder output = new StringBuilder();
 
                 output.AppendLine("Location ambiguity response; Re-run this tool with your input clarified on which point of interest you are trying to plan to go or from or via.");
@@ -52,7 +53,7 @@ namespace MCPServerDemo.Tools
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                return "No journeys found. You can retry replacing words like \"Railway Station\", \"Railstation\" or \"Rail Station\" to see if you get better results. Especially for routes outside London.";
+                return "No journeys found. You can retry replacing words like \"Railway Station\" or \"Rail Station\" to see if you get better results. Especially for routes outside London.";
             }
             else if (!response.IsSuccessStatusCode)
             {
@@ -81,9 +82,9 @@ namespace MCPServerDemo.Tools
                     {
                         int pointIdx = 1;
                         var callingPoints = path.GetProperty("stopPoints").EnumerateArray();
-                        
+
                         journeySummary.Append("Calling at: ");
-                        
+
                         foreach (var callingPoint in callingPoints)
                         {
                             string pointFriendly = "Unknown";
@@ -92,7 +93,8 @@ namespace MCPServerDemo.Tools
                             if (callingPoint.TryGetProperty("name", out var nameObj))
                             {
                                 pointFriendly = nameObj.ToString();
-                            } else if (callingPoint.TryGetProperty("commonName", out var commonNameObj))
+                            }
+                            else if (callingPoint.TryGetProperty("commonName", out var commonNameObj))
                             {
                                 pointFriendly = commonNameObj.ToString();
                             }
@@ -105,7 +107,8 @@ namespace MCPServerDemo.Tools
                             if (pointIdx == callingPoints.Count())
                             {
                                 journeySummary.Append($"and {pointFriendly} ({pointId}).\n");
-                            } else
+                            }
+                            else
                             {
                                 journeySummary.Append($"{pointFriendly} ({pointId}), ");
                             }
@@ -122,7 +125,8 @@ namespace MCPServerDemo.Tools
                             if (disruption.TryGetProperty("description", out var descObj))
                             {
                                 desc = descObj.ToString();
-                            } else if (disruption.TryGetProperty("summary", out var sumObj))
+                            }
+                            else if (disruption.TryGetProperty("summary", out var sumObj))
                             {
                                 desc = sumObj.ToString();
                             }
@@ -137,7 +141,8 @@ namespace MCPServerDemo.Tools
 
                     if (leg.TryGetProperty("plannedWorks", out var plannedWorksObj))
                     {
-                        foreach (var work in plannedWorksObj.EnumerateArray()) {
+                        foreach (var work in plannedWorksObj.EnumerateArray())
+                        {
                             journeySummary.AppendLine($"Planned Engineering Works: {work.GetProperty("description").ToString()}");
                         }
                     }
@@ -148,9 +153,9 @@ namespace MCPServerDemo.Tools
 
                 if (journey.TryGetProperty("fare", out var fareObj))
                 {
-                    if(fareObj.TryGetProperty("totalCost", out var totalCostObj) && int.TryParse(totalCostObj.ToString(), out int totalCost))
+                    if (fareObj.TryGetProperty("totalCost", out var totalCostObj) && int.TryParse(totalCostObj.ToString(), out int totalCost))
                     {
-                        journeySummary.AppendLine($"Estimated total fare: £{String.Format("{0:0.00}", totalCost/100)}");
+                        journeySummary.AppendLine($"Estimated total fare: £{String.Format("{0:0.00}", totalCost / 100)}");
                     }
 
                     foreach (var fare in fareObj.GetProperty("fares").EnumerateArray())
@@ -160,7 +165,7 @@ namespace MCPServerDemo.Tools
                         if (fare.TryGetProperty("chargeProfileName", out var profile))
                         {
                             fareType = profile.ToString();
-                        } 
+                        }
                         else if (fare.TryGetProperty("type", out var type))
                         {
                             fareType = type.ToString();
@@ -168,7 +173,7 @@ namespace MCPServerDemo.Tools
 
                         if (fare.TryGetProperty("cost", out var costObj) && int.TryParse(costObj.ToString(), out int cost))
                         {
-                            journeySummary.AppendLine($"Fare Type: {fareType}, Cost: £{String.Format("{0:0.00}", cost/100)}");
+                            journeySummary.AppendLine($"Fare Type: {fareType}, Cost: £{String.Format("{0:0.00}", cost / 100)}");
                         }
                     }
 
@@ -198,7 +203,7 @@ namespace MCPServerDemo.Tools
         {
             StringBuilder sb = new StringBuilder();
 
-            if(!dis.TryGetProperty("disambiguationOptions", out var disambigOpts))
+            if (!dis.TryGetProperty("disambiguationOptions", out var disambigOpts))
             {
                 return "";
             }
@@ -206,14 +211,15 @@ namespace MCPServerDemo.Tools
             sb.AppendLine($"Options for {label} parameter");
 
             int i = 1;
-            foreach (var option in disambigOpts.EnumerateArray()) {
+            foreach (var option in disambigOpts.EnumerateArray())
+            {
                 var name = option.GetProperty("place").GetProperty("commonName");
                 var param = option.GetProperty("parameterValue");
 
                 sb.AppendLine($"{i}. {name} (parameter: {param})");
                 i++;
             }
-            
+
             return sb.ToString();
         }
     }
