@@ -15,8 +15,7 @@ namespace MCPServerDemo.Tools
             [Description("(Optional) Travel through point on the journey. Can be WGS84 coordinates expressed as \"lat,long\", a UK postcode, a Naptan (StopPoint) id, an ICS StopId, or a free-text string (will cause disambiguation unless it exactly matches a point of interest name).")] string via = "",
             [Description("Does the journey cover stops outside London? eg. \"nationalSearch=true\"")] bool nationalSearch = false)
         {
-            var url = $"/Journey/JourneyResults/{fromLocation}/to/{toLocation}" +
-                      (via != "" ? $"?via={via}" : "") + $"&nationalSearch={nationalSearch}";
+            var url = $"/Journey/JourneyResults/{fromLocation}/to/{toLocation}?nationalSearch={nationalSearch}" + (via != "" ? $"&via={via}" : "");
             using var response = await client.GetAsync(url);
 
             JsonDocument jDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
