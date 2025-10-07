@@ -50,17 +50,16 @@ namespace MCPServerDemo.Tools
 
                 return output.ToString();
             }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return "No journeys found. You can retry replacing words like \"Railway Station\" to \"Rail Station\" to see if you get better results. Especially for routes outside London.";
+            }
             else if (!response.IsSuccessStatusCode)
             {
                 return $"Cannot retrieve journeys from API ({response.StatusCode})";
             }
 
-
             var journeys = jElem.GetProperty("journeys").EnumerateArray();
-            if (journeys.Count() < 1) {
-                return "No journeys found.";
-            }
-
             StringBuilder journeySummary = new StringBuilder();
 
             journeySummary.AppendLine($"Journey(s) from {fromLocation} to {toLocation}");
