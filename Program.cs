@@ -9,12 +9,16 @@ builder.Logging.AddConsole(consoleLogOptions =>
     // Configure all logs to go to stderr
     consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Trace;
 });
-builder.Services
-    .AddMcpServer()
-    .WithHttpTransport()
-    .WithStdioServerTransport()
-    .WithTools<EchoTool>()
-    .WithTools<JourneyPlanner>();
+var mcpServer = builder.Services.AddMcpServer();
+
+mcpServer.WithHttpTransport()
+         .WithTools<EchoTool>()
+         .WithTools<JourneyPlanner>();
+
+if (Environment.GetEnvironmentVariable("DEVELOPMENT") != null)
+{
+    mcpServer.WithStdioServerTransport();
+}
 
 using var httpClient = new HttpClient { BaseAddress = new Uri("https://api.tfl.gov.uk") };
 httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("mcp-demo", "1.0"));
