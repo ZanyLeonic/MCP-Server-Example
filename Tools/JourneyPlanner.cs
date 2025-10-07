@@ -52,7 +52,7 @@ namespace MCPServerDemo.Tools
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                return "No journeys found. You can retry replacing words like \"Railway Station\" to \"Rail Station\" to see if you get better results. Especially for routes outside London.";
+                return "No journeys found. You can retry replacing words like \"Railway Station\", \"Railstation\" or \"Rail Station\" to see if you get better results. Especially for routes outside London.";
             }
             else if (!response.IsSuccessStatusCode)
             {
@@ -76,6 +76,42 @@ namespace MCPServerDemo.Tools
                     journeySummary.AppendLine($"{legStep}. => {leg.GetProperty("instruction").GetProperty("summary").ToString()} (Length: {leg.GetProperty("duration").ToString()} min(s))");
                     journeySummary.AppendLine($"   Departs: {leg.GetProperty("departureTime").GetString()}");
                     journeySummary.AppendLine($"   Arrives: {leg.GetProperty("arrivalTime").GetString()}");
+
+                    if (leg.TryGetProperty("path", out var path))
+                    {
+                        int pointIdx = 1;
+                        var callingPoints = path.GetProperty("stopPoints").EnumerateArray();
+                        
+                        journeySummary.Append("Calling at: ");
+                        
+                        foreach (var callingPoint in callingPoints)
+                        {
+                            string pointFriendly = "Unknown";
+                            string pointId = "???";
+
+                            if (callingPoint.TryGetProperty("name", out var nameObj))
+                            {
+                                pointFriendly = nameObj.ToString();
+                            } else if (callingPoint.TryGetProperty("commonName", out var commonNameObj))
+                            {
+                                pointFriendly = commonNameObj.ToString();
+                            }
+
+                            if (callingPoint.TryGetProperty("id", out var idObj))
+                            {
+                                pointId = idObj.ToString();
+                            }
+
+                            if (pointIdx == callingPoints.Count())
+                            {
+                                journeySummary.Append($"and {pointFriendly} ({pointId}).\n");
+                            } else
+                            {
+                                journeySummary.Append($"{pointFriendly} ({pointId}), ");
+                            }
+                            pointIdx++;
+                        }
+                    }
 
                     if (leg.TryGetProperty("disruptions", out var disruptionObj))
                     {
