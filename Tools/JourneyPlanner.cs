@@ -31,6 +31,7 @@ namespace MCPServerDemo.Tools
                 StringBuilder output = new StringBuilder();
 
                 output.AppendLine("Location ambiguity response; Re-run this tool with your input clarified on which point of interest you are trying to plan to go or from or via.");
+                output.AppendLine("If the station specified is not listed or close, try using the nationalSearch parameter for stations outside of London Zones");
 
                 if (jElem.TryGetProperty("fromLocationDisambiguation", out var fromLocationDis))
                 {
@@ -75,11 +76,86 @@ namespace MCPServerDemo.Tools
                 {
                     journeySummary.AppendLine($"{legStep}. => {leg.GetProperty("instruction").GetProperty("summary").ToString()} (Length: {leg.GetProperty("duration").ToString()} min(s))");
                     journeySummary.AppendLine($"   Departs: {leg.GetProperty("departureTime").GetString()}");
-                    journeySummary.AppendLine($"   Arrives: {leg.GetProperty("arrivalTime").GetString()}"); 
+                    journeySummary.AppendLine($"   Arrives: {leg.GetProperty("arrivalTime").GetString()}");
+
+                    if (leg.TryGetProperty("disruptions", out var disruptionObj))
+                    {
+                        foreach (var disruption in disruptionObj.EnumerateArray())
+                        {
+                            string desc = "";
+                            string closure = "";
+                            if (disruption.TryGetProperty("description", out var descObj))
+                            {
+                                desc = descObj.ToString();
+                            } else if (disruption.TryGetProperty("summary", out var sumObj))
+                            {
+                                desc = sumObj.ToString();
+                            }
+
+                            if (disruption.TryGetProperty("closureText", out var closeObj))
+                            {
+                                closure = closeObj.ToString();
+                            }
+                            journeySummary.AppendLine($"Disruptions: {desc} {closure}");
+                        }
+                    }
+
+                    if (leg.TryGetProperty("plannedWorks", out var plannedWorksObj))
+                    {
+                        foreach (var work in plannedWorksObj.EnumerateArray()) {
+                            journeySummary.AppendLine($"Planned Engineering Works: {work.GetProperty("description").ToString()}");
+                        }
+                    }
+
                     legStep++;
                 }
                 jOption++;
+
+                if (journey.TryGetProperty("fare", out var fareObj))
+                {
+                    if(fareObj.TryGetProperty("totalCost", out var totalCostObj) && int.TryParse(totalCostObj.ToString(), out int totalCost))
+                    {
+                        journeySummary.AppendLine($"Estimated total fare: £{String.Format("{0:0.00}", totalCost/100)}");
+                    }
+
+                    foreach (var fare in fareObj.GetProperty("fares").EnumerateArray())
+                    {
+                        string fareType = "Unknown";
+
+                        if (fare.TryGetProperty("chargeProfileName", out var profile))
+                        {
+                            fareType = profile.ToString();
+                        } 
+                        else if (fare.TryGetProperty("type", out var type))
+                        {
+                            fareType = type.ToString();
+                        }
+
+                        if (fare.TryGetProperty("cost", out var costObj) && int.TryParse(costObj.ToString(), out int cost))
+                        {
+                            journeySummary.AppendLine($"Fare Type: {fareType}, Cost: £{String.Format("{0:0.00}", cost/100)}");
+                        }
+                    }
+
+                    if (fareObj.TryGetProperty("caveats", out var caveatObj))
+                    {
+                        foreach (var caveat in caveatObj.EnumerateArray())
+                        {
+                            string caveatType = "None";
+                            if (caveat.TryGetProperty("type", out var type))
+                            {
+                                caveatType = type.ToString();
+                            }
+
+                            journeySummary.AppendLine($"Caveat: {caveat.GetProperty("text")} ({caveatType})");
+                        }
+                    }
+
+                }
             }
+
+            journeySummary.AppendLine("The listed information maybe important, please read carefully in detail before travelling.");
+
             return journeySummary.ToString();
         }
 
