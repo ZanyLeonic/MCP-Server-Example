@@ -1,5 +1,7 @@
+using MCPServerDemo.Tools;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole(consoleLogOptions =>
@@ -10,7 +12,13 @@ builder.Logging.AddConsole(consoleLogOptions =>
 builder.Services
     .AddMcpServer()
     .WithHttpTransport()
-    .WithTools<EchoTool>();
+    .WithStdioServerTransport()
+    .WithTools<EchoTool>()
+    .WithTools<JourneyPlanner>();
+
+using var httpClient = new HttpClient { BaseAddress = new Uri("https://api.tfl.gov.uk") };
+httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("mcp-demo", "1.0"));
+builder.Services.AddSingleton(httpClient);
 
 var app = builder.Build();
 
